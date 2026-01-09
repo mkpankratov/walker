@@ -726,19 +726,6 @@ fn setup_keyboard_handling(ui: &WindowData) {
 
                     return true;
                 }
-
-                        }
-                        _ => (),
-                    }
-
-                    return true;
-                }
-                        }
-                        _ => (),
-                    }
-
-                    return true;
-                }
             }
 
             if let Some(a) = after {
