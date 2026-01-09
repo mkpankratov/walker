@@ -108,6 +108,15 @@ impl ResultsView {
         }
     }
 
+    fn columns(&self) -> u32 {
+        self.max_columns()
+    }
+
+    fn set_columns(&self, columns: u32) {
+        self.set_max_columns(columns);
+        self.set_min_columns(columns);
+    }
+
     fn set_model<M: gtk4::glib::object::IsA<gtk4::SelectionModel>>(&self, model: Option<&M>) {
         match self {
             Self::Grid(v) => v.set_model(model),
@@ -708,8 +717,20 @@ fn setup_keyboard_handling(ui: &WindowData) {
                         ACTION_SELECT_PREVIOUS if !is_grid_mode => select_previous(),
                         ACTION_SELECT_LEFT if use_grid_binds => select_previous(),
                         ACTION_SELECT_RIGHT if use_grid_binds => select_next(),
-                        ACTION_SELECT_UP if use_grid_binds => select_up(),
-                        ACTION_SELECT_DOWN if use_grid_binds => select_down(),
+                        ACTION_SELECT_UP if use_grid_binds => {
+                            if is_horizontal && !is_grid_mode {
+                                select_previous();
+                            } else {
+                                select_up();
+                            }
+                        }
+                        ACTION_SELECT_DOWN if use_grid_binds => {
+                            if is_horizontal && !is_grid_mode {
+                                select_next();
+                            } else {
+                                select_down();
+                            }
+                        }
                         ACTION_TOGGLE_EXACT => toggle_exact(),
                         ACTION_RESUME_LAST_QUERY => resume_last_query(),
                         ACTION_SELECT_PAGE_DOWN => select_page_down(),
@@ -720,6 +741,13 @@ fn setup_keyboard_handling(ui: &WindowData) {
                                 let i: u32 = after.parse().unwrap();
                                 quick_activate(&app, i)
                             }
+                        }
+                        _ => (),
+                    }
+
+                    return true;
+                }
+            }
                         }
                         _ => (),
                     }
