@@ -48,7 +48,7 @@ use gtk4::{
     prelude::{EditableExt, EventControllerExt, ListItemExt, SelectionModelExt},
 };
 use gtk4::{
-    GridView,
+    GridView, ListView,
     glib::object::{CastNone, ObjectExt},
 };
 use gtk4::{gdk, prelude::WidgetExt};
@@ -84,6 +84,107 @@ where
 }
 
 #[derive(Debug)]
+pub enum ResultsView {
+    Grid(GridView),
+    List(ListView),
+}
+
+impl ResultsView {
+    fn widget(&self) -> gtk4::Widget {
+        match self {
+            Self::Grid(v) => v.clone().upcast(),
+            Self::List(v) => v.clone().upcast(),
+        }
+    }
+
+    fn supports_columns(&self) -> bool {
+        matches!(self, Self::Grid(_))
+    }
+
+    fn orientation(&self) -> gtk4::Orientation {
+        match self {
+            Self::Grid(v) => v.orientation(),
+            Self::List(v) => v.orientation(),
+        }
+    }
+
+    fn set_model<M: gtk4::glib::IsA<gtk4::SelectionModel>>(&self, model: Option<&M>) {
+        match self {
+            Self::Grid(v) => v.set_model(model),
+            Self::List(v) => v.set_model(model),
+        }
+    }
+
+    fn set_factory<F: gtk4::glib::IsA<gtk4::ListItemFactory>>(&self, factory: Option<&F>) {
+        match self {
+            Self::Grid(v) => v.set_factory(factory),
+            Self::List(v) => v.set_factory(factory),
+        }
+    }
+
+    fn connect_activate<C: Fn() + 'static>(&self, callback: C) {
+        match self {
+            Self::Grid(v) => v.connect_activate(move |_, _| callback()),
+            Self::List(v) => v.connect_activate(move |_, _| callback()),
+        };
+    }
+
+    fn set_single_click_activate(&self, val: bool) {
+        match self {
+            Self::Grid(v) => v.set_single_click_activate(val),
+            Self::List(v) => v.set_single_click_activate(val),
+        }
+    }
+
+    fn scroll_to(
+        &self,
+        position: u32,
+        flags: gtk4::ListScrollFlags,
+        scroll_info: Option<&gtk4::ScrollInfo>,
+    ) {
+        match self {
+            Self::Grid(v) => v.scroll_to(position, flags, scroll_info),
+            Self::List(v) => v.scroll_to(position, flags, scroll_info),
+        }
+    }
+
+    fn max_columns(&self) -> u32 {
+        match self {
+            Self::Grid(v) => v.max_columns(),
+            Self::List(_) => 1,
+        }
+    }
+
+    fn set_max_columns(&self, cols: u32) {
+        if let Self::Grid(v) = self {
+            v.set_max_columns(cols);
+        }
+    }
+
+    fn set_min_columns(&self, cols: u32) {
+        if let Self::Grid(v) = self {
+            v.set_min_columns(cols);
+        }
+    }
+
+    fn add_css_class(&self, name: &str) {
+        self.widget().add_css_class(name);
+    }
+
+    fn remove_css_class(&self, name: &str) {
+        self.widget().remove_css_class(name);
+    }
+
+    fn set_can_target(&self, can_target: bool) {
+        self.widget().set_can_target(can_target);
+    }
+
+    fn can_target(&self) -> bool {
+        self.widget().can_target()
+    }
+}
+
+#[derive(Debug)]
 pub struct WindowData {
     pub sid: Option<gdk::glib::SignalHandlerId>,
     pub builder: Builder,
@@ -93,7 +194,7 @@ pub struct WindowData {
     pub app: Application,
     pub window: Window,
     pub selection: SingleSelection,
-    pub list: GridView,
+    pub list: ResultsView,
     pub list_max_columns: u32,
     pub input: Option<Entry>,
     pub items: ListStore,
@@ -143,9 +244,12 @@ pub fn setup_theme_window(app: &Application, val: &Theme) -> Result<WindowData, 
         None => return Err("missing 'Scroll' object".into()),
     };
 
-    let list: GridView = match builder.object("List") {
-        Some(w) => w,
-        None => return Err("missing 'List' object".into()),
+    let list: ResultsView = if let Some(w) = builder.object::<GridView>("List") {
+        ResultsView::Grid(w)
+    } else if let Some(w) = builder.object::<ListView>("List") {
+        ResultsView::List(w)
+    } else {
+        return Err("missing 'List' object".into());
     };
 
     let elephant_hint: Label = match builder.object("ElephantHint") {
@@ -209,7 +313,7 @@ pub fn setup_theme_window(app: &Application, val: &Theme) -> Result<WindowData, 
     let selection = SingleSelection::new(Some(filter_model.clone()));
     let search_container: Option<Box> = builder.object("SearchContainer");
     let preview_container: Option<Box> = builder.object("Preview");
-    let max_columns = list.max_columns();
+    let max_columns = list.columns();
 
     let mut ui = WindowData {
         error,
@@ -1011,7 +1115,7 @@ fn disable_mouse() {
     with_window(|w| {
         w.mouse_x.set(0.0);
         w.mouse_y.set(0.0);
-        w.list.set_can_target(false);
+        w.list.widget().set_can_target(false);
     });
 }
 
@@ -1507,17 +1611,19 @@ pub fn handle_grid_setting() {
     {
         with_window(|w| {
             w.items.remove_all();
-            w.list.set_max_columns(*c);
-            w.list.set_min_columns(*c);
 
-            let is_grid = *c > 1;
+            if w.list.supports_columns() {
+                w.list.set_columns(w.list_max_columns);
+            }
+
+            let is_grid = w.list.supports_columns() && w.list_max_columns > 1;
 
             set_is_grid(is_grid);
 
             if is_grid {
-                w.list.add_css_class("grid");
+                w.list.widget().add_css_class("grid");
             } else {
-                w.list.remove_css_class("grid");
+                w.list.widget().remove_css_class("grid");
             }
         });
     }

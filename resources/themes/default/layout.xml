@@ -96,12 +96,11 @@
                     <property name="hscrollbar-policy">automatic</property>
                     <property name="vscrollbar-policy">automatic</property>
                     <child>
-                      <object class="GtkGridView" id="List">
+                      <object class="GtkListView" id="List">
                         <style>
                           <class name="list"></class>
                         </style>
-                        <property name="max_columns">1</property>
-                        <property name="min_columns">1</property>
+                        <property name="orientation">horizontal</property>
                         <property name="can_focus">false</property>
                       </object>
                     </child>
