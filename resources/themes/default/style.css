@@ -96,8 +96,13 @@ child {
   padding: 10px;
 }
 
-/* child:hover .item-box, */
-child:selected .item-box {
+child:hover .item-box,
+row:hover .item-box {
+  background: alpha(@accent_bg_color, 0.15);
+}
+
+child:selected .item-box,
+row:selected .item-box {
   background: alpha(@accent_bg_color, 0.25);
 }
 

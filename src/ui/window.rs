@@ -692,17 +692,24 @@ fn setup_keyboard_handling(ui: &WindowData) {
             }
 
             if after.is_none() {
-                let is_grid = is_grid();
+                let is_grid_mode = is_grid();
+                let is_horizontal = w.list.orientation() == gtk4::Orientation::Horizontal;
+                let use_grid_binds = is_grid_mode || is_horizontal;
 
-                if let Some(action) = get_bind(k, m, is_grid) {
+                // For horizontal ListView we want Left/Right/Up/Down navigation,
+                // but still allow classic Next/Previous binds as a fallback.
+                let action = get_bind(k, m, use_grid_binds)
+                    .or_else(|| use_grid_binds.then(|| get_bind(k, m, false)).flatten());
+
+                if let Some(action) = action {
                     match action.action.as_str() {
                         ACTION_CLOSE => quit(&app, true),
-                        ACTION_SELECT_NEXT if !is_grid => select_next(),
-                        ACTION_SELECT_PREVIOUS if !is_grid => select_previous(),
-                        ACTION_SELECT_LEFT if is_grid => select_previous(),
-                        ACTION_SELECT_RIGHT if is_grid => select_next(),
-                        ACTION_SELECT_UP if is_grid => select_up(),
-                        ACTION_SELECT_DOWN if is_grid => select_down(),
+                        ACTION_SELECT_NEXT if !is_grid_mode => select_next(),
+                        ACTION_SELECT_PREVIOUS if !is_grid_mode => select_previous(),
+                        ACTION_SELECT_LEFT if use_grid_binds => select_previous(),
+                        ACTION_SELECT_RIGHT if use_grid_binds => select_next(),
+                        ACTION_SELECT_UP if use_grid_binds => select_up(),
+                        ACTION_SELECT_DOWN if use_grid_binds => select_down(),
                         ACTION_TOGGLE_EXACT => toggle_exact(),
                         ACTION_RESUME_LAST_QUERY => resume_last_query(),
                         ACTION_SELECT_PAGE_DOWN => select_page_down(),
@@ -713,6 +720,19 @@ fn setup_keyboard_handling(ui: &WindowData) {
                                 let i: u32 = after.parse().unwrap();
                                 quick_activate(&app, i)
                             }
+                        }
+                        _ => (),
+                    }
+
+                    return true;
+                }
+
+                        }
+                        _ => (),
+                    }
+
+                    return true;
+                }
                         }
                         _ => (),
                     }
