@@ -36,12 +36,11 @@ use crate::{
     },
     theme::{Theme, setup_layer_shell, with_themes},
 };
-use gtk4::prelude::OrientableExt;
 use gtk4::{
     Application, Builder, Button, CustomFilter, Entry, EventControllerKey, EventControllerMotion,
     FilterListModel, GestureClick, Label, PropagationPhase, ScrolledWindow, SignalListItemFactory,
     SingleSelection, Window,
-    prelude::{BoxExt, ButtonExt},
+    prelude::{BoxExt, ButtonExt, OrientableExt},
 };
 use gtk4::{Box, ListScrollFlags};
 use gtk4::{
@@ -314,7 +313,7 @@ pub fn setup_theme_window(app: &Application, val: &Theme) -> Result<WindowData, 
     let selection = SingleSelection::new(Some(filter_model.clone()));
     let search_container: Option<Box> = builder.object("SearchContainer");
     let preview_container: Option<Box> = builder.object("Preview");
-    let max_columns = list.columns();
+    let max_columns = list.max_columns();
 
     let mut ui = WindowData {
         error,
@@ -423,7 +422,7 @@ fn setup_window_behavior(ui: &WindowData, app: &Application) {
 
     let app_copy = app.clone();
 
-    ui.list.connect_activate(move |_, _| {
+    ui.list.connect_activate(move || {
         activate_default(&app_copy);
     });
 
@@ -1614,10 +1613,11 @@ pub fn handle_grid_setting() {
             w.items.remove_all();
 
             if w.list.supports_columns() {
-                w.list.set_columns(w.list_max_columns);
+                w.list.set_max_columns(*c);
+                w.list.set_min_columns(*c);
             }
 
-            let is_grid = w.list.supports_columns() && w.list_max_columns > 1;
+            let is_grid = w.list.supports_columns() && *c > 1;
 
             set_is_grid(is_grid);
 
