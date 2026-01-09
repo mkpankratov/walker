@@ -36,11 +36,12 @@ use crate::{
     },
     theme::{Theme, setup_layer_shell, with_themes},
 };
+use gtk4::prelude::OrientableExt;
 use gtk4::{
     Application, Builder, Button, CustomFilter, Entry, EventControllerKey, EventControllerMotion,
     FilterListModel, GestureClick, Label, PropagationPhase, ScrolledWindow, SignalListItemFactory,
     SingleSelection, Window,
-    prelude::{BoxExt, ButtonExt, IsA},
+    prelude::{BoxExt, ButtonExt, OrientableExt},
 };
 use gtk4::{Box, ListScrollFlags};
 use gtk4::{
@@ -49,7 +50,7 @@ use gtk4::{
 };
 use gtk4::{
     GridView, ListView,
-    glib::object::{CastNone, IsA, ObjectExt},
+    glib::object::{CastNone, ObjectExt},
 };
 use gtk4::{gdk, prelude::WidgetExt};
 use gtk4::{gio::ListStore, glib::object::Cast};
@@ -143,8 +144,8 @@ impl ResultsView {
         scroll_info: Option<&gtk4::ScrollInfo>,
     ) {
         match self {
-            Self::Grid(v) => v.scroll_to(position, flags, scroll_info),
-            Self::List(v) => v.scroll_to(position, flags, scroll_info),
+            Self::Grid(v) => v.scroll_to(position, flags, scroll_info.cloned()),
+            Self::List(v) => v.scroll_to(position, flags, scroll_info.cloned()),
         }
     }
 
