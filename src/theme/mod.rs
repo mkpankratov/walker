@@ -38,12 +38,16 @@ impl Theme {
             grid_items: HashMap::new(),
         };
 
-        for (k, v) in PROVIDERS.get().unwrap() {
-            s.items.insert(k.clone(), v.get_item_layout());
-        }
+        let default_item_layout = include_str!("../../resources/themes/default/item.xml");
 
         for (k, v) in PROVIDERS.get().unwrap() {
-            s.grid_items.insert(k.clone(), v.get_item_grid_layout());
+            let item_layout = v.get_item_layout();
+            s.items.insert(k.clone(), item_layout);
+
+            let grid_layout = v.get_item_grid_layout();
+            if grid_layout != default_item_layout {
+                s.grid_items.insert(k.clone(), grid_layout);
+            }
         }
 
         s
@@ -73,11 +77,12 @@ pub fn setup_themes(elephant: bool, theme: String, is_service: bool) {
 
     let combined = if elephant {
         let mut result = files;
-        let additional = PROVIDERS
-            .get()
-            .unwrap()
-            .iter()
-            .map(|v| format!("item_{}.xml", v.0));
+        let additional = PROVIDERS.get().unwrap().iter().flat_map(|v| {
+            [
+                format!("item_{}.xml", v.0),
+                format!("item_{}_grid.xml", v.0),
+            ]
+        });
         result.extend(additional);
         result
     } else {
@@ -188,14 +193,14 @@ fn setup_theme_from_path(path: PathBuf, files: &Vec<String>) -> Option<Theme> {
                     let key = name
                         .strip_prefix("item_")
                         .unwrap()
-                        .strip_suffix(".xml")
+                        .strip_suffix("_grid.xml")
                         .unwrap();
                     theme.grid_items.insert(key.to_string(), s);
                 }
             }
             name if name.ends_with(".xml")
                 && name.starts_with("item_")
-                && !name.ends_with("grid.xml") =>
+                && !name.ends_with("_grid.xml") =>
             {
                 if let Some(s) = read_file(file) {
                     let key = name

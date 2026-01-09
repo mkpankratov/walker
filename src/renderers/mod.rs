@@ -14,21 +14,17 @@ use std::path::Path;
 pub fn create_item(list_item: &ListItem, item: &Item, theme: &Theme) {
     let mut b = Builder::new();
 
-    let _ = if !is_grid() {
-        b.add_from_string(
-            theme
-                .items
-                .get(&item.provider)
-                .unwrap_or_else(|| panic!("failed to get item layout: {}", &item.provider)),
-        )
+    let layout = if is_grid() {
+        theme
+            .grid_items
+            .get(&item.provider)
+            .or_else(|| theme.items.get(&item.provider))
     } else {
-        b.add_from_string(
-            theme
-                .grid_items
-                .get(&item.provider)
-                .unwrap_or_else(|| panic!("failed to get item grid layout: {}", &item.provider)),
-        )
-    };
+        theme.items.get(&item.provider)
+    }
+    .unwrap_or_else(|| panic!("failed to get item layout: {}", &item.provider));
+
+    let _ = b.add_from_string(layout);
 
     let itembox: Box = match b.object("ItemBox") {
         Some(w) => w,
@@ -39,12 +35,18 @@ pub fn create_item(list_item: &ListItem, item: &Item, theme: &Theme) {
 
             with_themes(|t| {
                 let theme = t.get("default").unwrap();
-                let _ = b.add_from_string(
+
+                let layout = if is_grid() {
                     theme
-                        .items
+                        .grid_items
                         .get(&item.provider)
-                        .expect("failed to get item layout"),
-                );
+                        .or_else(|| theme.items.get(&item.provider))
+                } else {
+                    theme.items.get(&item.provider)
+                }
+                .expect("failed to get item layout");
+
+                let _ = b.add_from_string(layout);
             });
 
             b.object("ItemBox").unwrap()
