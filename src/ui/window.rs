@@ -40,7 +40,7 @@ use gtk4::{
     Application, Builder, Button, CustomFilter, Entry, EventControllerKey, EventControllerMotion,
     FilterListModel, GestureClick, Label, PropagationPhase, ScrolledWindow, SignalListItemFactory,
     SingleSelection, Window,
-    prelude::{BoxExt, ButtonExt},
+    prelude::{BoxExt, ButtonExt, IsA},
 };
 use gtk4::{Box, ListScrollFlags};
 use gtk4::{
@@ -49,7 +49,7 @@ use gtk4::{
 };
 use gtk4::{
     GridView, ListView,
-    glib::object::{CastNone, ObjectExt},
+    glib::object::{CastNone, IsA, ObjectExt},
 };
 use gtk4::{gdk, prelude::WidgetExt};
 use gtk4::{gio::ListStore, glib::object::Cast};
@@ -108,14 +108,14 @@ impl ResultsView {
         }
     }
 
-    fn set_model<M: gtk4::glib::IsA<gtk4::SelectionModel>>(&self, model: Option<&M>) {
+    fn set_model<M: gtk4::glib::object::IsA<gtk4::SelectionModel>>(&self, model: Option<&M>) {
         match self {
             Self::Grid(v) => v.set_model(model),
             Self::List(v) => v.set_model(model),
         }
     }
 
-    fn set_factory<F: gtk4::glib::IsA<gtk4::ListItemFactory>>(&self, factory: Option<&F>) {
+    fn set_factory<F: gtk4::glib::object::IsA<gtk4::ListItemFactory>>(&self, factory: Option<&F>) {
         match self {
             Self::Grid(v) => v.set_factory(factory),
             Self::List(v) => v.set_factory(factory),
