@@ -41,7 +41,7 @@ use gtk4::{
     Application, Builder, Button, CustomFilter, Entry, EventControllerKey, EventControllerMotion,
     FilterListModel, GestureClick, Label, PropagationPhase, ScrolledWindow, SignalListItemFactory,
     SingleSelection, Window,
-    prelude::{BoxExt, ButtonExt, OrientableExt},
+    prelude::{BoxExt, ButtonExt},
 };
 use gtk4::{Box, ListScrollFlags};
 use gtk4::{
